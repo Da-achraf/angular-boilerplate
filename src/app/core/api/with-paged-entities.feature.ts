@@ -56,8 +56,10 @@ export function withPagedEntities<Entity extends { id: number }, C, U>(
       queryParams: {},
     }),
 
+    // Loading feature
     withLoading(),
 
+    // Primeng toaster
     withToaster(),
 
     withProps(() => ({
@@ -105,7 +107,7 @@ export function withPagedEntities<Entity extends { id: number }, C, U>(
             switchMap(({ page, pageSize, queryParams }) =>
               loader.load(page, pageSize, queryParams).pipe(
                 tapResponse({
-                  next: (response) => {
+                  next: response => {
                     patchState(
                       state,
                       setAllEntities(response.items as Entity[]),
@@ -130,10 +132,10 @@ export function withPagedEntities<Entity extends { id: number }, C, U>(
         save: rxMethod<C>(
           pipe(
             tap(() => startLoading('save')), // Start loading for 'save'
-            switchMap((body) =>
+            switchMap(body =>
               loader.save(body).pipe(
                 tapResponse({
-                  next: (response) => {
+                  next: response => {
                     _showSuccess('Created successfully.');
                     patchState(state, setEntity(response as Entity));
                   },
@@ -158,7 +160,7 @@ export function withPagedEntities<Entity extends { id: number }, C, U>(
             switchMap(({ body, id }) =>
               loader.update(body, id).pipe(
                 tapResponse({
-                  next: (response) => {
+                  next: response => {
                     patchState(state, setEntity(response as Entity));
                     _showSuccess('Updated successfully.');
                   },
@@ -175,10 +177,10 @@ export function withPagedEntities<Entity extends { id: number }, C, U>(
         loadOne: rxMethod<number>(
           pipe(
             tap(() => startLoading('load')),
-            switchMap((id) =>
+            switchMap(id =>
               loader.loadOne(id).pipe(
                 tapResponse({
-                  next: (response) => {
+                  next: response => {
                     patchState(state, {
                       item: response as Entity,
                     });
@@ -195,10 +197,10 @@ export function withPagedEntities<Entity extends { id: number }, C, U>(
         deleteOne: rxMethod<number>(
           pipe(
             tap(() => startLoading('delete')),
-            switchMap((id) =>
+            switchMap(id =>
               loader.deleteOne(id).pipe(
                 tapResponse({
-                  next: (_) => {
+                  next: _ => {
                     patchState(state, removeEntity(id));
                     _showSuccess('Deleted successfully.');
                   },
@@ -217,8 +219,15 @@ export function withPagedEntities<Entity extends { id: number }, C, U>(
         setPageSize: (pageSize: number) => {
           patchState(state, { pageSize, trigger: state.trigger() + 1 });
         },
-        setQueryParams: (queryParams: { [key: string]: any }) => {
+        initializeQueryParams: (queryParams: QueryParamType) => {
           patchState(state, { queryParams, trigger: state.trigger() + 1 });
+        },
+
+        setQueryParams: (params: QueryParamType) => {
+          patchState(state, {
+            queryParams: { ...state.queryParams(), ...params },
+            trigger: state.trigger() + 1,
+          });
         },
       })
     ),
